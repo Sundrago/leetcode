@@ -1,68 +1,44 @@
-public class TimeMap
-    {
-        private readonly IDictionary<string, IList<(int timestamp, string value)>> _data;
-
-        public TimeMap()
-        {
-            _data = new Dictionary<string, IList<(int timestamp, string value)>>();
+public class TimeMap {
+        private Dictionary<string, List<Data>> datas;
+    
+        public TimeMap() {
+            datas = new Dictionary<string, List<Data>>();
         }
-
-        public void Set(string key, string value, int timestamp)
-        {
-            if (!_data.ContainsKey(key))
-            {
-                _data[key] = new List<(int timestamp, string value)>();
+    
+        public void Set(string key, string value, int timestamp) {
+            if(!datas.ContainsKey(key)) {
+                datas.Add(key, new List<Data>());
             }
-
-            _data[key].Add((timestamp, value));
+            datas[key].Add(new Data(value, timestamp));
         }
+    
+        public string Get(string key, int timestamp) {
+            if(!datas.ContainsKey(key)) return "";
+        
+            var comparer = Comparer<Data>.Create((a,b)=>a.timestamp.CompareTo(b.timestamp));
+            List<Data> valuesList = datas[key];
 
-        public string Get(string key, int timestamp)
-        {
-            if (!_data.ContainsKey(key))
-            {
-                return string.Empty;
+            if (timestamp >= valuesList[valuesList.Count - 1].timestamp) return valuesList[valuesList.Count - 1].value;
+            if (timestamp < valuesList[0].timestamp) return string.Empty;
+            
+            //else return string.Empty;
+
+            int index = valuesList.BinarySearch(new Data("", timestamp), comparer);
+            if (index < 0) {
+                return valuesList[~index - 1].value;
+            } else {
+                return valuesList[index].value;
             }
-
-            var list = _data[key];
-
-            int left = 0;
-            int right = list.Count - 1;
-
-            while (left < right)
-            {
-                if (right - left == 1)
-                {
-                    break;
-                }
-
-                int mid = left + (right - left) / 2;
-
-                var midItem = list[mid];
-                if (midItem.timestamp == timestamp)
-                {
-                    return midItem.value;
-                }
-
-                if (midItem.timestamp < timestamp)
-                {
-                    left = mid;
-                    continue;
-                }
-
-                right = mid;
+        }
+    
+    
+        public class Data {
+            public string value;
+            public int timestamp;
+        
+            public Data(string _value, int _timestamp){
+                value = _value;
+                timestamp = _timestamp;
             }
-
-            if (list[right].timestamp <= timestamp)
-            {
-                return list[right].value;
-            }
-
-            if (list[left].timestamp <= timestamp)
-            {
-                return list[left].value;
-            }
-
-            return string.Empty;
         }
     }
